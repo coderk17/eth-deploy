@@ -1,0 +1,2 @@
+eth-account==0.5.9
+parsimonious==0.10.0
