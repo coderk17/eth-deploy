@@ -37,59 +37,66 @@ def geth_start(mode, accounts_file, data_dir):
     check_container_command = ['docker', 'ps', '-aq', '-f', f'name=geth-{mode}']
     container_id = subprocess.run(check_container_command, capture_output=True, text=True).stdout.strip()
 
-    # 修改 Docker 运行命令
-    if not container_id:
-        # 如果容器不存在，创建并启动容器
-        create_container_command = [
-            'docker', 'run', '-d', '--name', f'geth-{mode}', '--rm',
-            '-v', f'{os.path.abspath(ethereum_dir)}:/root/.ethereum',
-            '-v', f'{os.path.abspath(ethereum_dir)}\\genesis.json:/root/genesis.json',
-            docker_image,
-            'init', '/root/genesis.json'
-        ]
-        subprocess.run(create_container_command, check=True)
-        # 启动节点
-        if mode == 'pow':
-            start_node_command = [
-                'docker', 'run', '-d',
-                '--name', f'geth-{mode}',
-                '-v', f'{os.path.abspath(ethereum_dir)}:/root/.ethereum',
-                '-p', '8545:8545',
-                docker_image,
-                '--datadir', '/root/.ethereum',
-                '--networkid', '12345', '--mine',
-                '--miner.threads', '1',
-                '--miner.etherbase', f'{account['address']}',
-                '--http', '--http.addr', '127.0.0.1',
-                '--http.port', '8545',
-                '--http.api', 'eth,net,web3,personal,miner'
-            ]
-        elif mode == 'pos':
-            start_node_command = [
-                'docker', 'run', '-d',
-                '--name', f'geth-{mode}',
-                '-v', f'{os.path.abspath(ethereum_dir)}:/root/.ethereum',
-                '-p', '8545:8545',
-                docker_image,
-                '--datadir', '/root/.ethereum',
-                '--networkid', '12345',
-                '--http', '--http.addr', '127.0.0.1',
-                '--http.port', '8545',
-                '--http.api', 'eth,net,web3,personal',
-                '--mine', '--miner.etherbase', '0'
-            ]
-        
-        subprocess.run(start_node_command, check=True)
-        print(f"已在后台启动 {mode.upper()} 节点")
+    if container_id:
+        # 如果容器已存在,先停止并删除它
+        stop_container_command = ['docker', 'stop', container_id]
+        remove_container_command = ['docker', 'rm', container_id]
+        subprocess.run(stop_container_command, check=True)
+        subprocess.run(remove_container_command, check=True)
+        print(f"已停止并删除现有的 {mode} 容器")
+
+    # 创建并启动新容器
+    create_container_command = [
+        'docker', 'run', '-d', '--name', f'geth-{mode}', '--rm',
+        '-v', f'{os.path.abspath(ethereum_dir)}:/root/.ethereum',
+        '-v', f'{os.path.join(os.path.abspath(ethereum_dir), "genesis.json")}:/root/genesis.json',
+        docker_image,
+        'init', '/root/genesis.json'
+    ]
+    result = subprocess.run(create_container_command, check=True, capture_output=True, text=True)
+    if result.returncode == 0:
+        print(f"成功创建 {mode} 容器")
     else:
-        # 检查容器是否已运行
-        check_running_command = ['docker', 'inspect', '-f', '{{.State.Running}}', f'geth-{mode}']
-        is_running = subprocess.run(check_running_command, capture_output=True, text=True).stdout.strip()
-        
-        if is_running != 'true':
-            # 如果容器存在但未运行，启动容器
-            start_container_command = ['docker', 'start', f'geth-{mode}']
-            subprocess.run(start_container_command, check=True)
+        print(f"创建 {mode} 容器失败: {result.stderr}")
+        sys.exit(1)
+
+    import time
+    time.sleep(1)
+
+    # 启动节点
+    if mode == 'pow':
+        start_node_command = [
+            'docker', 'run', '-d',
+            '--name', f'geth-{mode}',
+            '-v', f'{os.path.abspath(ethereum_dir)}:/root/.ethereum',
+            '-p', '8545:8545',
+            docker_image,
+            '--datadir', '/root/.ethereum',
+            '--networkid', '12345', '--mine',
+            '--miner.threads', '1',
+            '--miner.etherbase', f'{account["address"]}',
+            '--http', '--http.addr', '127.0.0.1',
+            '--http.port', '8545',
+            '--http.api', 'eth,net,web3,personal,miner',
+            '--ipcdisable'
+        ]
+    elif mode == 'pos':
+        start_node_command = [
+            'docker', 'run', '-d',
+            '--name', f'geth-{mode}',
+            '-v', f'{os.path.abspath(ethereum_dir)}:/root/.ethereum',
+            '-p', '8545:8545',
+            docker_image,
+            '--datadir', '/root/.ethereum',
+            '--networkid', '12345',
+            '--http', '--http.addr', '127.0.0.1',
+            '--http.port', '8545',
+            '--http.api', 'eth,net,web3,personal',
+            '--mine', '--miner.etherbase', '0'
+        ]
+    
+    subprocess.run(start_node_command, check=True)
+    print(f"已在后台启动 {mode.upper()} 节点")
 
 if __name__ == "__main__":
     if len(sys.argv) != 2 or sys.argv[1] not in ['pow', 'pos']:
