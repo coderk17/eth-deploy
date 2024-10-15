@@ -10,10 +10,6 @@
 1. 调用create_accounts()函数创建账户
 2. 调用create_genesis()函数生成创世区块配置
 3. 根据需要选择PoW或PoS共识机制
-
-注意:
-- 生成的账户信息包含私钥，请妥善保管
-- 创世区块配置中的chainId、gasLimit等参数可根据实际需求调整
 """
 import json
 import os
@@ -85,17 +81,17 @@ def main():
 
     # 创建PoW版本的genesis.json
     pow_genesis = create_genesis(accounts, is_pos=False)
-    with open('data/genesis_pow.json', 'w') as f:
+    with open('data/pow/genesis.json', 'w') as f:
         json.dump(pow_genesis, f, indent=2)
 
-    print(f"已生成PoW版本的创世块配置文件 data/genesis_pow.json")
+    print(f"已生成PoW版本的创世块配置文件 data/pow/genesis.json")
 
     # 创建PoS版本的genesis.json
     pos_genesis = create_genesis(accounts, is_pos=True)
-    with open('data/genesis_pos.json', 'w') as f:
+    with open('data/pos/genesis.json', 'w') as f:
         json.dump(pos_genesis, f, indent=2)
 
-    print(f"已生成PoS版本的创世块配置文件 data/genesis_pos.json")
+    print(f"已生成PoS版本的创世块配置文件 data/pos/genesis.json")
 
 if __name__ == "__main__":
     main()

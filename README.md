@@ -61,13 +61,13 @@ python tools/gen_genesis.py
 使用创世配置文件初始化您的私链。对于POW版本:
 
 ```bash
-docker run --name geth-pow -v ${PWD}\data\genesis_pow.json:/root/genesis.json -v ${PWD}\data\pow:/root/.ethereum geth:pow init /root/genesis.json
+docker run --name geth-pow --rm -v ${PWD}\data\pow\genesis.json:/root/genesis.json -v ${PWD}\data\pow:/root/.ethereum geth:pow init /root/genesis.json
 ```
 
 对于POS版本:
 
 ```bash
-docker run --name geth-pos -v ${PWD}\data\genesis_pos.json:/root/genesis.json -v ${PWD}\data\pos:/root/.ethereum geth:pos init /root/genesis.json
+docker run --name geth-pos --rm -v ${PWD}\data\pos\genesis.json:/root/genesis.json -v ${PWD}\data\pos:/root/.ethereum geth:pos init /root/genesis.json
 ```
 
 ## 5. 启动以太坊私链节点
@@ -75,7 +75,7 @@ docker run --name geth-pos -v ${PWD}\data\genesis_pos.json:/root/genesis.json -v
 运行以下命令启动您的私链节点。对于POW版本:
 
 ```bash
-docker run -it --rm `
+docker run --name geth-pow -it --rm `
   -p 8545:8545 `
   -v ${PWD}\data\pow:/root/.ethereum `
   geth:pow `
@@ -90,9 +90,9 @@ docker run -it --rm `
 对于POS版本:
 
 ```bash
-docker run -it --rm `
+docker run --name geth-pow -it --rm `
   -p 8545:8545 `
-  -v ${PWD}\data:/root/.ethereum `
+  -v ${PWD}\data\pow:/root/.ethereum `
   ethereum/client-go:v1.13.8 `
   --networkid 12345 `
   --http `
@@ -108,7 +108,17 @@ docker run -it --rm `
 
 ## 6. 创建账户
 
-账户已经由 `gen_account.py` 脚本生成,保存在 `data/accounts.json` 文件中。
+我们提供了一个Python脚本来生成创世配置文件。首先,确保您已安装所需的Python依赖:
+
+```bash
+pip install -r tools/requirements.txt
+```
+
+然后运行账户和创世块生成脚本:
+
+```bash
+python tools/geth_account_import.py
+```
 
 ## 7. 开始挖矿或验证
 
@@ -168,3 +178,23 @@ clique.getSigners()
 2. 生成的账户信息存储在 `data/accounts.json` 文件中,请妥善保管这些信息。
 3. 如果您需要修改创世块配置,可以编辑 `genesis_pow.json` 或 `genesis_pos.json` 文件。但请注意,修改创世块配置后需要重新初始化私链。
 4. 本指南假设您在项目根目录下执行所有命令。如果您在不同的目录下,请相应地调整文件路径。
+
+## 导入账户私钥
+
+在初始化和启动节点之后，您可以使用以下命令导入 `data/accounts.json` 中的账户私钥：
+
+对于 POW 版本：
+
+```bash
+python tools/geth_account_import.py pow
+```
+
+对于 POS 版本：
+
+```bash
+python tools/geth_account_import.py pos
+```
+
+这个脚本会读取 `data/accounts.json` 文件，并将其中的私钥导入到您的 Geth 节点中。请确保在运行此脚本之前，您已经初始化了私链并启动了节点。
+
+注意: 这个脚本使用空密码导入私钥。在生产环境中，您应该使用更安全的方法来管理密码。
