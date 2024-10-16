@@ -1,3 +1,5 @@
 eth-account==0.5.9
 parsimonious==0.8.1
-web3==7.3.1
+# web3==7.3.1 (pos版本）
+# web3==5.8.1 (pow版本）
+web3==5.8.1
