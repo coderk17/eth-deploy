@@ -14,6 +14,7 @@
         或 geth_start('pos', 'data')
 '''
 import json
+import time
 import os
 import subprocess
 import sys
@@ -56,11 +57,7 @@ def geth_start(mode, accounts_file, data_dir):
     result = subprocess.run(create_container_command, check=True, capture_output=True, text=True)
     if result.returncode == 0:
         print(f"成功创建 {mode} 容器")
-    else:
-        print(f"创建 {mode} 容器失败: {result.stderr}")
-        sys.exit(1)
 
-    import time
     time.sleep(1)
 
     # 启动节点
@@ -72,8 +69,8 @@ def geth_start(mode, accounts_file, data_dir):
             '-p', '8545:8545',
             docker_image,
             '--datadir', '/root/.ethereum',
-            '--networkid', '12345', '--mine',
-            '--miner.threads', '1',
+            '--ads', '1',
+            '--networkid', '193284561987324', '--mine',
             '--miner.etherbase', f'{account["address"]}',
             '--http', '--http.addr', '127.0.0.1',
             '--http.port', '8545',
@@ -88,7 +85,7 @@ def geth_start(mode, accounts_file, data_dir):
             '-p', '8545:8545',
             docker_image,
             '--datadir', '/root/.ethereum',
-            '--networkid', '12345',
+            '--networkid', '193284561987324', '--mine',
             '--http', '--http.addr', '127.0.0.1',
             '--http.port', '8545',
             '--http.api', 'eth,net,web3,personal',

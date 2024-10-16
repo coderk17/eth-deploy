@@ -94,7 +94,7 @@ docker run --name geth-pow -it --rm `
   -p 8545:8545 `
   -v ${PWD}\data\pow:/root/.ethereum `
   ethereum/client-go:v1.13.8 `
-  --networkid 12345 `
+  --networkid 193284561987324 `
   --http `
   --http.addr "0.0.0.0" `
   --http.port 8545 `

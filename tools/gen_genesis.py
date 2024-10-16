@@ -30,7 +30,7 @@ def create_accounts(num_accounts=100):
 def create_genesis(accounts, is_pos=False):
     genesis = {
         "config": {
-            "chainId": 12345,
+            "chainId": 193284561987324,
             "homesteadBlock": 0,
             "eip150Block": 0,
             "eip155Block": 0,
