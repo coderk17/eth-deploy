@@ -28,6 +28,33 @@ def clean_private_key(private_key):
         raise ValueError(f"Invalid private key length: {len(private_key)}")
     return private_key
 
+def check_and_pull_image(mode):
+    # 检查镜像是否存在
+    check_image_command = ['docker', 'images', '-q', f'geth:{mode}']
+    image_exists = subprocess.run(check_image_command, capture_output=True, text=True).stdout.strip()
+    
+    if not image_exists:
+        print(f"geth:{mode} 镜像不存在，正在拉取并打标签...")
+        # 根据模式拉取特定版本的以太坊客户端镜像
+        if mode == 'pow':
+            pull_command = ['docker', 'pull', 'ethereum/client-go:v1.10.26']
+        elif mode == 'pos':
+            pull_command = ['docker', 'pull', 'ethereum/client-go:v1.13.8']
+        else:
+            raise ValueError("无效的模式。请使用 'pow' 或 'pos'。")
+        subprocess.run(pull_command, check=True)
+        
+        # 为拉取的镜像打标签
+        if mode == 'pow':
+            tag_command = ['docker', 'tag', 'ethereum/client-go:v1.10.26', f'geth:{mode}']
+        elif mode == 'pos':
+            tag_command = ['docker', 'tag', 'ethereum/client-go:v1.13.8', f'geth:{mode}']
+        subprocess.run(tag_command, check=True)
+        
+        print(f"已成功拉取并标记 geth:{mode} 镜像")
+    else:
+        print(f"geth:{mode} 镜像已存在")
+
 def import_accounts(accounts_file, data_dir, mode):
     # 从JSON文件中读取账户信息
     with open(accounts_file, 'r') as f:
@@ -108,4 +135,6 @@ if __name__ == "__main__":
     accounts_file = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data', 'accounts.json')
     data_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data')
     
+    # 在导入账户之前检查并拉取镜像
+    check_and_pull_image(mode)
     import_accounts(accounts_file, data_dir, mode)

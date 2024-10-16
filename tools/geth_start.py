@@ -88,14 +88,35 @@ def geth_start(mode, accounts_file, data_dir):
             '--datadir', '/root/.ethereum',
             '--networkid', '193284561987324',
             '--mine',
-            '--miner.threads=1',
             '--http', '--http.addr', '0.0.0.0',
             '--http.port', '8545',
             '--http.api', 'eth,net,web3,personal',
-            '--mine', '--miner.etherbase', '0'
+            '--mine',
+            '--miner.etherbase', f'{account["address"]}',
+            '--ipcdisable',
+            '--syncmode', 'full',
+            '--gcmode', 'archive',
+            '--allow-insecure-unlock',
+            '--unlock', f'{account["address"]}',
+            '--password', '/dev/null'
         ]
     
     subprocess.run(start_node_command, check=True)
+
+    # 如果是 POS 模式，添加验证者
+    if mode == 'pos':
+        time.sleep(5)  # 等待节点启动
+        add_validator_command = [
+            'docker', 'exec', f'geth-{mode}',
+            'geth', '--exec', f'clique.propose("{account["address"]}", true)',
+            'attach', 'http://localhost:8545'
+        ]
+        try:
+            subprocess.run(add_validator_command, check=True, capture_output=True, text=True)
+            print(f"已成功将 {account['address']} 添加为验证者")
+        except subprocess.CalledProcessError as e:
+            print(f"添加验证者失败: {e.stderr}")
+
     print(f"已在后台启动 {mode.upper()} 节点")
 
 if __name__ == "__main__":
